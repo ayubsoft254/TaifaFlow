@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ page_title }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.12/dist/ext/sse.js"></script>
+  </head>
+  <body class="min-h-screen bg-slate-950 text-slate-100">
+    <main class="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+      <header class="mb-6 flex items-center justify-between">
+        <div>
+          <h1 class="text-3xl font-semibold tracking-tight">TaifaFlow</h1>
+          <p class="text-sm text-slate-300">Real-time traffic orchestration dashboard</p>
+        </div>
+        <span class="rounded-full border border-emerald-300/30 bg-emerald-400/10 px-3 py-1 text-xs text-emerald-200">
+          Live Monitor
+        </span>
+      </header>
+
+      <section class="grid gap-4 lg:grid-cols-3">
+        <article class="rounded-2xl border border-slate-700 bg-slate-900 p-4 lg:col-span-2">
+          <div class="mb-3 flex items-center justify-between">
+            <h2 class="text-lg font-medium">City Map</h2>
+            <span id="location-status" class="text-xs text-slate-400">Locating...</span>
+          </div>
+          <div class="overflow-hidden rounded-xl border border-slate-700">
+            <iframe
+              id="map-frame"
+              title="Map"
+              class="h-[420px] w-full"
+              src="https://www.openstreetmap.org/export/embed.html?bbox=36.74%2C-1.34%2C36.90%2C-1.20&amp;layer=mapnik"
+            ></iframe>
+          </div>
+        </article>
+
+        <article
+          id="traffic-alert-box"
+          class="rounded-2xl border border-amber-300/30 bg-amber-300/10 p-4 text-amber-100"
+          hx-get="/fragments/traffic-alert-box"
+          hx-trigger="load"
+          hx-swap="innerHTML"
+          hx-ext="sse"
+          sse-connect="/stream/traffic-alerts"
+          sse-swap="traffic-alert"
+        >
+          <h2 class="mb-2 text-lg font-medium">Traffic Alerts</h2>
+          <p class="text-sm">{{ initial_alert }}</p>
+        </article>
+      </section>
+    </main>
+
+    <script>
+      const mapFrame = document.getElementById("map-frame");
+      const locationStatus = document.getElementById("location-status");
+
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const lat = pos.coords.latitude;
+            const lon = pos.coords.longitude;
+            const delta = 0.06;
+            const bbox = `${lon - delta}%2C${lat - delta}%2C${lon + delta}%2C${lat + delta}`;
+            mapFrame.src = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat}%2C${lon}`;
+            locationStatus.textContent = "Centered on your location";
+          },
+          () => {
+            locationStatus.textContent = "Using default city center";
+          }
+        );
+      } else {
+        locationStatus.textContent = "Geolocation unavailable";
+      }
+    </script>
+  </body>
+</html>
