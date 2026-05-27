@@ -50,6 +50,52 @@
           <p class="text-sm">{{ initial_alert }}</p>
         </article>
       </section>
+
+      <section class="mt-4 grid gap-4 lg:grid-cols-3">
+        <article class="rounded-2xl border border-slate-700 bg-slate-900 p-4 lg:col-span-2">
+          <h2 class="mb-3 text-lg font-medium">Optimal Route Finder</h2>
+          <form
+            class="grid gap-3 sm:grid-cols-3"
+            hx-get="/fragments/optimal-route"
+            hx-target="#optimal-route-result"
+            hx-swap="innerHTML"
+          >
+            <label class="flex flex-col gap-1 text-sm">
+              <span class="text-slate-300">Origin</span>
+              <select name="origin" class="rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-slate-100" required>
+                <option value="" selected disabled>Select origin</option>
+                {% for point in route_points %}
+                <option value="{{ point }}">{{ point.replace('_', ' ').title() }}</option>
+                {% endfor %}
+              </select>
+            </label>
+
+            <label class="flex flex-col gap-1 text-sm">
+              <span class="text-slate-300">Destination</span>
+              <select name="destination" class="rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-slate-100" required>
+                <option value="" selected disabled>Select destination</option>
+                {% for point in route_points %}
+                <option value="{{ point }}">{{ point.replace('_', ' ').title() }}</option>
+                {% endfor %}
+              </select>
+            </label>
+
+            <div class="flex items-end">
+              <button
+                type="submit"
+                class="w-full rounded-lg border border-cyan-300/40 bg-cyan-300/15 px-3 py-2 text-sm font-medium text-cyan-200 hover:bg-cyan-300/25"
+              >
+                Find Route
+              </button>
+            </div>
+          </form>
+        </article>
+
+        <article id="optimal-route-result" class="rounded-2xl border border-cyan-300/30 bg-cyan-300/10 p-4 text-cyan-100">
+          <h3 class="mb-2 text-base font-medium">Route Recommendation</h3>
+          <p class="text-sm">Select origin and destination, then click Find Route.</p>
+        </article>
+      </section>
     </main>
 
     <script>
