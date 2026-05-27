@@ -1,0 +1,5 @@
+<h2 class="mb-2 text-lg font-medium">{{ alert_title }}</h2>
+<p class="text-sm">{{ alert_text }}</p>
+{% if alert_updated %}
+<p class="mt-2 text-xs text-amber-200/80">Updated {{ alert_updated }}</p>
+{% endif %}
