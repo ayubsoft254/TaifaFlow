@@ -10,6 +10,7 @@ from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 
 from taifaflow.config import settings
+from taifaflow.services.orchestration.route_optimizer import RouteOptimizer
 from taifaflow.services.state_store.traffic_state_store import TrafficStateStore
 
 
@@ -28,6 +29,7 @@ SEVERITY_RANK = {
 }
 
 _redis_client: Redis | None = None
+_route_optimizer = RouteOptimizer()
 
 
 def _get_redis_client() -> Redis:
@@ -113,6 +115,7 @@ async def dashboard(request: Request) -> HTMLResponse:
         context={
             "page_title": "TaifaFlow Traffic Brain",
             "initial_alert": DEFAULT_ALERT,
+            "route_points": _route_optimizer.available_points(),
         },
     )
 
@@ -148,3 +151,36 @@ async def stream_traffic_alerts(request: Request) -> StreamingResponse:
             "X-Accel-Buffering": "no",
         },
     )
+
+
+@router.get("/fragments/optimal-route", response_class=HTMLResponse)
+async def optimal_route_fragment(origin: str, destination: str) -> HTMLResponse:
+    redis_client = _get_redis_client()
+    result = await _route_optimizer.find_optimal_route(
+        redis_client=redis_client,
+        origin=origin,
+        destination=destination,
+    )
+
+    path = result.get("path", [])
+    path_display = " -> ".join(str(node).replace("_", " ").title() for node in path)
+
+    segment_details = result.get("segment_details", [])
+    display_segments = [
+        {
+            **segment,
+            "from_display": str(segment.get("from", "")).replace("_", " ").title(),
+            "to_display": str(segment.get("to", "")).replace("_", " ").title(),
+        }
+        for segment in segment_details
+    ]
+
+    template = templates.get_template("fragments/optimal_route_result.html")
+    content = template.render(
+        origin=origin,
+        destination=destination,
+        result=result,
+        path_display=path_display,
+        segment_details_display=display_segments,
+    )
+    return HTMLResponse(content=content)
